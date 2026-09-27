@@ -22,6 +22,10 @@ data/iceberg/
 # Sensitive Environment Files
 .env
 
+# Internal Working Drafts & Checkpoints
+PROJECT_CHECKPOINT.md
+icelake-project.md
+
 # OS-generated files
 .DS_Store
 Thumbs.db
