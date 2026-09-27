@@ -1,0 +1,5 @@
+Engine,Query_Type,Latency_Seconds,Estimated_Files_Scanned,Notes
+PySpark 3.5,Full Table Scan (12 Partitions),2.407,12,Scanned all 12 monthly Parquet files (~54MB)
+PySpark 3.5,Partition Pruned (1 Partition - June 2024),0.793,1,Hidden partitioning months(created_date) skipped 11 files
+Trino 475,Full Table Scan (12 Partitions),0.201,12,Distributed SQL full table scan
+Trino 475,Partition Pruned (1 Partition - June 2024),0.126,1,Trino connector evaluated Iceberg partition metadata

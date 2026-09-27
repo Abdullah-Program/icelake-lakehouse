@@ -1,0 +1,27 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Local S3 Storage Data (Large Binary Chunks)
+data/garage-data/
+data/garage-meta/
+data/iceberg/
+
+# Sensitive Environment Files
+.env
+
+# OS-generated files
+.DS_Store
+Thumbs.db

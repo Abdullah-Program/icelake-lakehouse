@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  garage:
+    image: dxflrs/garage:v1.0.1
+    container_name: garage
+    ports:
+      - "3900:3900"
+      - "3903:3903"
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml
+      - ../data/garage-meta:/var/lib/garage/meta
+      - ../data/garage-data:/var/lib/garage/data
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  polaris:
+    image: apache/polaris:latest
+    container_name: polaris
+    ports:
+      - "8181:8181"
+      - "8182:8182"
+    environment:
+      - POLARIS_PERSISTENCE_TYPE=in-memory
+      - polaris.bootstrap.credentials=POLARIS,polaris,polaris
+      - polaris.features."SUPPORTED_CATALOG_STORAGE_TYPES"=["FILE","S3","GCS","AZURE"]
+      - polaris.features."ALLOW_INSECURE_STORAGE_TYPES"=true
+      - polaris.readiness.ignore-severe-issues=true
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=GK1f5cbdb2ac0aebcbb74e18d5
+      - AWS_SECRET_ACCESS_KEY=b5057d94ab27275064a278e2e358bbe751d3610c26f7d6499bc5f0ca76996b29
+      - AWS_ENDPOINT_URL_S3=http://garage:3900
+      - AWS_ENDPOINT_URL=http://garage:3900
+      - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
+      - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED
+      - JAVA_OPTS_APPEND=-Daws.disableChunkedEncoding=true -Daws.requestChecksumCalculation=WHEN_REQUIRED -Daws.responseChecksumValidation=WHEN_REQUIRED
+    depends_on:
+      garage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8182/q/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  trino:
+    image: trinodb/trino:475
+    container_name: trino
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./trino/catalog:/etc/trino/catalog
+      - ./trino/config.properties:/etc/trino/config.properties
+    depends_on:
+      polaris:
+        condition: service_healthy
+
+  jupyter:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - PYTHONPATH=/usr/local/spark/python:/usr/local/spark/python/lib/py4j-0.10.9.7-src.zip
+      - AWS_REGION=us-east-1
+      - AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
+      - AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED
+    user: root
